@@ -14,21 +14,84 @@ module.exports = function (router) {
     // GET all users
     var getAllUsers = router.route('/users');
     getAllUsers.get(function (req, res) {
-        User.find({}, function (err, users) {
-            if (err) {
-                console.log(err);
-                return res.status(404).send({
-                    message: err.message,
-                    data: {},
-                });
-            }
-            else {
-                return res.status(200).send({
-                    message: "OK",
-                    data: users,
-                });
-            }
-        });
+
+        my_limit = 100000;
+        my_count = false;
+        my_skip = 0;
+
+        if ( req.query.hasOwnProperty('limit')) {
+            my_limit = parseInt(req.query['limit'], 10);
+        }
+
+        if ( req.query.hasOwnProperty('count')) {
+            my_count = req.query['count'];
+        }
+
+        if ( req.query.hasOwnProperty('skip')) {
+            my_skip = parseInt(req.query['skip'], 10);
+        }
+        
+        my_sort = {};
+        my_select = {};
+        my_where = {};
+
+        if ( req.query.hasOwnProperty('sort')) {
+            my_sort = JSON.parse(req.query['sort']);
+        }
+
+        if ( req.query.hasOwnProperty('select')) {
+            my_select = JSON.parse(req.query['select']);
+        }
+
+        if ( req.query.hasOwnProperty('where')) {
+            my_where = JSON.parse(req.query['where']);
+        }      
+        if (my_count === 'true') {
+            User.count({}, function (err, count) {
+                if (err) {
+                    console.log(err);
+                    return res.status(404).send({
+                        message: err.message,
+                        data: {},
+                    });
+                }
+                else {
+                    return res.status(200).send({
+                        message: "OK",
+                        data: {
+                            'count': count
+                        }
+                    });
+                }
+            })
+            .where(my_where)
+            .limit(my_limit)
+            .skip(my_skip);
+        }
+        else {
+            User.find({}, function (err, users) {
+                if (err) {
+                    console.log(err);
+                    return res.status(404).send({
+                        message: err.message,
+                        data: {},
+                    });
+                }
+                else {
+                    return res.status(200).send({
+                        message: "OK",
+                        data: users,
+                    });                    
+                }
+            })
+            .where(my_where)
+            .limit(my_limit)
+            .sort(my_sort)
+            .select(my_select)
+            .skip(my_skip);
+        }
+
+        
     });
 
     // GET user by id
@@ -62,21 +125,91 @@ module.exports = function (router) {
     // GET all tasks
     var getAllTasks = router.route('/tasks');
     getAllTasks.get(function (req, res) {
-        Task.find({}, function (err, tasks) {
-            if (err) {
-                console.log(err);
-                return res.status(404).send({
-                    message: err.message,
-                    data: {},
-                });
-            }
-            else {
-                return res.status(200).send({
-                    message: "OK",
-                    data: tasks,
-                });
-            }
-        });
+
+        my_limit = 100;
+        my_count = false;
+        my_skip = 0;
+
+        if ( req.query.hasOwnProperty('limit')) {
+            my_limit = parseInt(req.query['limit'], 10);
+        }
+
+        if ( req.query.hasOwnProperty('count')) {
+            my_count = req.query['count'];
+        }
+
+        if ( req.query.hasOwnProperty('skip')) {
+            my_skip = parseInt(req.query['skip'], 10);
+        }
+        
+        my_sort = {};
+        my_select = {};
+        my_where = {};
+        if ( req.query.hasOwnProperty('sort')) {
+            my_sort = JSON.parse(req.query['sort']);
+        }
+
+        if ( req.query.hasOwnProperty('select')) {
+            my_select = JSON.parse(req.query['select']);
+        }
+
+        if ( req.query.hasOwnProperty('where')) {
+            my_where = JSON.parse(req.query['where']);
+        }
+
+        if (my_count === 'true') {
+            Task.count({}, function (err, count) {
+                if (err) {
+                    console.log(err);
+                    return res.status(404).send({
+                        message: err.message,
+                        data: {},
+                    });
+                }
+                else {
+                    return res.status(200).send({
+                        message: "OK",
+                        data: {
+                            'count': count
+                        },
+                    });
+                }
+            })
+            .where(my_where)
+            .limit(my_limit)
+            .skip(my_skip);
+        }
+        else {
+            Task.find({}, function (err, tasks) {
+                if (err) {
+                    console.log(err);
+                    return res.status(404).send({
+                        message: err.message,
+                        data: {},
+                    });
+                }
+                else {
+                    if (my_count == true) {
+                        
+                        return res.status(200).send({
+                            message: "OK",
+                            data: tasks.length,
+                        });
+                    }
+                    else {
+                        return res.status(200).send({
+                            message: "OK",
+                            data: tasks,
+                        });
+                    }
+                }
+            })
+            .where(my_where)
+            .limit(my_limit)
+            .sort(my_sort)
+            .select(my_select)
+            .skip(my_skip);
+        }
     });
 
     // GET task by id
@@ -143,7 +276,7 @@ module.exports = function (router) {
             else {
                 return res.status(200).send({
                     message: "OK",
-                    data: "User Deleted Successfully",
+                    data: "Task Deleted Successfully",
                 });
             }
         });
@@ -161,7 +294,7 @@ module.exports = function (router) {
         }
         // email already exists
         if (false) {
-
+            // @TODO
         }
 
         // Get params for user here
@@ -191,25 +324,27 @@ module.exports = function (router) {
         // Validate request here
         if ( (!req.body.hasOwnProperty('name')) || (!req.body.hasOwnProperty('deadline')) ) {
             return res.status(404).send({
-                message: "Cannot create a user without a name or deadline",
+                message: "Cannot create a task without a name or deadline",
                 data: {},
             });
         }
 
         // Get params for user here
         var task_name = req.body['name'];
-        var task_description = req.body['description'];
+        var task_description = req.body['description'] || "";
+        var task_deadline = req.body['deadline'];
+        var task_completed = req.body['completed'] || false;
+        var task_assignedUser = req.body['assignedUser'] || "";
+        var task_assignedUserName = req.body['assignedUserName'] || "";
         var curr_date = new Date();
-
-        console.log(req.body);
 
         Task.create({
             name: task_name,
             description: task_description,
-            //deadline: Date,
-            //completed: Boolean,
-            //assignedUser: String,
-            //assignedUserName: String,
+            deadline: task_deadline,
+            completed: task_completed,
+            assignedUser: task_assignedUser,
+            assignedUserName: task_assignedUserName,
             dateCreated: curr_date,
         },
         function (err, task) {
@@ -220,7 +355,11 @@ module.exports = function (router) {
                 return res.status(201).send(task);
             }
         });
-    });    
+    }); 
+    
+    // PUT REQUESTS
+    // EMAIL VALIDATION IN POST USERS
+    // AUTOGRADER BUILD ERROR
 
     return router;
 }
