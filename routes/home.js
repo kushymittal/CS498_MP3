@@ -189,19 +189,10 @@ module.exports = function (router) {
                     });
                 }
                 else {
-                    if (my_count == true) {
-                        
-                        return res.status(200).send({
-                            message: "OK",
-                            data: tasks.length,
-                        });
-                    }
-                    else {
-                        return res.status(200).send({
-                            message: "OK",
-                            data: tasks,
-                        });
-                    }
+                    return res.status(200).send({
+                        message: "OK",
+                        data: tasks,
+                    });
                 }
             })
             .where(my_where)
@@ -292,29 +283,45 @@ module.exports = function (router) {
                 data: {},
             });
         }
-        // email already exists
-        if (false) {
-            // @TODO
-        }
 
         // Get params for user here
         var user_name = req.body['name'];
         var user_email = req.body['email'];
-        var user_pendingTasks = req.body['pendingTasks'];
+        var user_pendingTasks = req.body['pendingTasks'] || [];
         var curr_date = new Date();
 
-        User.create({
-            name: user_name,
-            email: user_email,
-            pendingTasks: user_pendingTasks,
-            dateCreated: curr_date,
+        // email already exists
+        User.findOne({
+            'email': user_email
         },
         function (err, user) {
-            if (err) {
-                return res.status(500).send(err.message);
+            if (user) {
+                return res.status(201).send({
+                    message: "User with email already exists",
+                    data: {}
+                });
             }
             else {
-                return res.status(201).send(user);
+                User.create({
+                    name: user_name,
+                    email: user_email,
+                    pendingTasks: user_pendingTasks,
+                    dateCreated: curr_date,
+                },
+                function (err, user) {
+                    if (err) {
+                        return res.status(500).send({
+                            message: err.message,
+                            data: {}
+                        });
+                    }
+                    else {
+                        return res.status(201).send({
+                            message: "OK",
+                            data: user
+                        });
+                    }
+                });
             }
         });
     });
@@ -349,16 +356,111 @@ module.exports = function (router) {
         },
         function (err, task) {
             if (err) {
-                return res.status(500).send(err.message);
+                return res.status(500).send({
+                    message: err.message,
+                    data: {}
+                });
             }
             else {
-                return res.status(201).send(task);
+                return res.status(201).send({
+                    message: "OK",
+                    data: task
+                });
             }
         });
     }); 
     
-    // PUT REQUESTS
-    // EMAIL VALIDATION IN POST USERS
+    // PUT update user
+    userById.put(function (req, res) {
+        console.log(req.body);
+
+        // Validate request here
+        if ( (!req.body.hasOwnProperty('name')) || (!req.body.hasOwnProperty('email')) ) {
+            return res.status(404).send({
+                message: "Cannot update a user without a name or email",
+                data: {},
+            });
+        }
+
+        var id = req.params.id;
+
+        // Get params for user here
+        var user_name = req.body['name'];
+        var user_email = req.body['email'];
+        var user_pendingTasks = req.body['pendingTasks'] || [];
+        var curr_date = new Date();
+
+
+        User.findByIdAndUpdate(id, {
+            name: user_name,
+            email: user_email,
+            pendingTasks: user_pendingTasks,
+            dateCreated: curr_date,
+        }, 
+        {new: true}, 
+        function (err, user) {
+            if (err) {
+                return res.status(500).send({
+                    message: err.message,
+                    data: {}
+                });
+            }
+            else {
+                return res.status(201).send({
+                    message: "OK",
+                    data: user
+                });
+            }
+        });
+    });
+
+    // PUT update task
+    taskById.put(function (req, res) {
+        // Validate request here
+        if ( (!req.body.hasOwnProperty('name')) || (!req.body.hasOwnProperty('deadline')) ) {
+            return res.status(404).send({
+                message: "Cannot create a task without a name or deadline",
+                data: {},
+            });
+        }
+
+        var id = req.params.id;
+
+        // Get params for user here
+        var task_name = req.body['name'];
+        var task_description = req.body['description'] || "";
+        var task_deadline = req.body['deadline'];
+        var task_completed = req.body['completed'] || false;
+        var task_assignedUser = req.body['assignedUser'] || "";
+        var task_assignedUserName = req.body['assignedUserName'] || "";
+        var curr_date = new Date();
+
+        Task.findByIdAndUpdate(id, {
+            name: task_name,
+            description: task_description,
+            deadline: task_deadline,
+            completed: task_completed,
+            assignedUser: task_assignedUser,
+            assignedUserName: task_assignedUserName,
+            dateCreated: curr_date,
+        },
+        {new: true},
+        function (err, task) {
+            if (err) {
+                return res.status(500).send({
+                    message: err.message,
+                    data: {}
+                });
+            }
+            else {
+                return res.status(201).send({
+                    message: "OK",
+                    data: task
+                });
+            }
+        });
+    }); 
+
     // AUTOGRADER BUILD ERROR
 
     return router;
