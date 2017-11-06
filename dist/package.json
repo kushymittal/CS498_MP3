@@ -1,0 +1,30 @@
+{
+  "name": "mp3_starter_17",
+  "version": "1.0.0",
+  "description": "MP3 Starter for CS498RK Fall 2017",
+  "authors": [
+    "James Lee <jwlee11@illinois.edu>",
+    "Sujay Khandekar <khandek2@illinois.edu>"
+  ],
+  "scripts": {
+    "build": "babel ./ --ignore ./node_modules,./dist -d dist/ && cp package.json dist/",
+    "start": "nodemon --exec node server.js"
+  },
+  "babel": {
+    "presets": [
+      "es2017"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/uiuc-web-programming/mp3_starter_17.git"
+  },
+  "dependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-es2017": "^6.24.1",
+    "body-parser": "^1.17.2",
+    "express": "^4.15.3",
+    "mongoose": "^4.10.0",
+    "nodemon": "^1.11.0"
+  }
+}
